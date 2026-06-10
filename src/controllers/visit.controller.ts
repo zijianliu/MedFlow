@@ -60,7 +60,7 @@ export async function requeueMissed(req: AuthRequest, res: Response, next: any) 
 export async function getDoctorQueue(req: AuthRequest, res: Response, next: any) {
   try {
     if (!req.user) return;
-    const { doctorId } = req.params;
+    const doctorId = req.params.doctorId || req.params.id;
     const { date } = req.query;
 
     if (req.user.role === 'DOCTOR' && req.user.userId !== doctorId) {

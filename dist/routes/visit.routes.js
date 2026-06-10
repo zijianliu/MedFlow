@@ -43,6 +43,6 @@ router.post('/call', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.Use
 router.post('/complete/:id', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.UserRole.DOCTOR), visitController.completeVisit);
 router.post('/miss/:id', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.UserRole.DOCTOR), visitController.markMissed);
 router.post('/requeue/:id', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.UserRole.DOCTOR, enums_1.UserRole.ADMIN), visitController.requeueMissed);
-router.get('/doctors/:doctorId/queue', auth_1.authMiddleware, visitController.getDoctorQueue);
+router.get('/queue/:doctorId', auth_1.authMiddleware, visitController.getDoctorQueue);
 exports.default = router;
 //# sourceMappingURL=visit.routes.js.map

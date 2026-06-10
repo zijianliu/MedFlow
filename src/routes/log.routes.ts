@@ -6,6 +6,13 @@ import { UserRole } from '../types/enums';
 const router = Router();
 
 router.get(
+  '/',
+  authMiddleware,
+  requireRoles(UserRole.ADMIN, UserRole.DEPT_ADMIN),
+  logController.listOperationLogs,
+);
+
+router.get(
   '/operation',
   authMiddleware,
   requireRoles(UserRole.ADMIN, UserRole.DEPT_ADMIN),

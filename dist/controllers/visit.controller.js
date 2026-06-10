@@ -104,7 +104,7 @@ async function getDoctorQueue(req, res, next) {
     try {
         if (!req.user)
             return;
-        const { doctorId } = req.params;
+        const doctorId = req.params.doctorId || req.params.id;
         const { date } = req.query;
         if (req.user.role === 'DOCTOR' && req.user.userId !== doctorId) {
             return res.status(403).json({ code: 'FORBIDDEN', message: '无权限查看其他医生队列' });

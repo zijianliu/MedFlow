@@ -4,42 +4,41 @@ const PatientPages = {
   currentScheduleId: null,
 
   async renderDepartments() {
+    const content = document.getElementById('content');
+    content.innerHTML = `
+      <h2 style="margin-bottom: 20px;">选择科室</h2>
+      <div class="card">${showLoadingSkeleton(6)}</div>
+    `;
+
     try {
       const res = await API.get('/api/departments');
-      const departments = res || [];
-      const deptList = Array.isArray(departments) ? departments : (departments.list || []);
+      const deptList = safeArray(res);
 
       let html = `<h2 style="margin-bottom: 20px;">选择科室</h2>`;
 
       if (!deptList || deptList.length === 0) {
-        html += `
-          <div class="empty">
-            <div class="icon">🏥</div>
-            <p>暂无可预约科室</p>
-            <p style="color: #999; font-size: 13px; margin-top: 8px;">请等待管理员添加科室信息</p>
-          </div>
-        `;
+        html += showEmptyPage('🏥', '暂无可预约科室', '<p style="color: #999; font-size: 13px; margin-top: 8px;">请等待管理员添加科室信息</p>');
       } else {
         html += '<div class="grid grid-3">';
-        (deptList || []).forEach(dept => {
+        deptList.forEach(dept => {
           html += `
-            <div class="dept-card" onclick="PatientPages.selectDepartment('${dept.id}')">
-              <h3>${escapeHtml(dept.name || '')}</h3>
-              <p>${escapeHtml(dept.description || '暂无介绍')}</p>
-              <div class="doctor-count">👨‍⚕️ ${(dept._count && dept._count.doctors) || 0} 位医生</div>
+            <div class="dept-card" onclick="PatientPages.selectDepartment('${safeValue(dept, 'id', '')}')">
+              <h3>${escapeHtml(safeValue(dept, 'name', ''))}</h3>
+              <p>${escapeHtml(safeValue(dept, 'description', '暂无介绍'))}</p>
+              <div class="doctor-count">👨‍⚕️ ${safeValue(dept, '_count.doctors', 0)} 位医生</div>
             </div>
           `;
         });
         html += '</div>';
       }
 
-      document.getElementById('content').innerHTML = `
+      content.innerHTML = `
         <div class="card">
           ${html}
         </div>
       `;
     } catch (error) {
-      showToast(error.message, 'error');
+      showErrorPage(error.message || '加载科室列表失败', function() { PatientPages.renderDepartments(); });
     }
   },
 
@@ -51,6 +50,16 @@ const PatientPages = {
   async renderDoctors() {
     const deptId = getParam('deptId');
     this.currentDeptId = deptId;
+    const content = document.getElementById('content');
+
+    content.innerHTML = `
+      <div style="margin-bottom: 20px;">
+        <a href="javascript:void(0)" onclick="navigate('departments')" style="color: #1890ff; text-decoration: none;">
+          ← 返回科室列表
+        </a>
+      </div>
+      <div class="card">${showLoadingSkeleton(5)}</div>
+    `;
 
     try {
       const [deptRes, doctorsRes] = await Promise.all([
@@ -59,7 +68,7 @@ const PatientPages = {
       ]);
 
       const department = deptRes || {};
-      const doctors = doctorsRes || [];
+      const doctors = safeArray(doctorsRes);
 
       let html = `
         <div style="margin-bottom: 20px;">
@@ -67,23 +76,23 @@ const PatientPages = {
             ← 返回科室列表
           </a>
         </div>
-        <h2 style="margin-bottom: 20px;">${escapeHtml(department.name || '')} - 医生列表</h2>
+        <h2 style="margin-bottom: 20px;">${escapeHtml(safeValue(department, 'name', ''))} - 医生列表</h2>
       `;
 
       if (!doctors || doctors.length === 0) {
-        html += `<div class="empty"><div class="icon">👨‍⚕️</div><p>暂无医生信息</p></div>`;
+        html += showEmptyPage('👨‍⚕️', '暂无医生信息');
       } else {
-        (doctors || []).forEach(doctor => {
-          const name = doctor.realName || doctor.name || '未知';
+        doctors.forEach(doctor => {
+          const name = safeValue(doctor, 'realName') || safeValue(doctor, 'name') || '未知';
           html += `
             <div class="doctor-card" style="margin-bottom: 16px;">
-              <div class="doctor-avatar">${escapeHtml(name.charAt(0))}</div>
+              <div class="doctor-avatar">${escapeHtml(name.charAt(0) || '医')}</div>
               <div class="doctor-info">
                 <h3>${escapeHtml(name)}</h3>
-                <div class="title">${escapeHtml(doctor.title || '')}</div>
-                <p class="intro">${escapeHtml(doctor.introduction || '暂无介绍')}</p>
+                <div class="title">${escapeHtml(safeValue(doctor, 'title', ''))}</div>
+                <p class="intro">${escapeHtml(safeValue(doctor, 'bio') || safeValue(doctor, 'introduction', '暂无介绍'))}</p>
               </div>
-              <button class="btn btn-primary" onclick="PatientPages.selectDoctor('${doctor.id}')">
+              <button class="btn btn-primary" onclick="PatientPages.selectDoctor('${safeValue(doctor, 'id', '')}')">
                 查看排班
               </button>
             </div>
@@ -91,9 +100,9 @@ const PatientPages = {
         });
       }
 
-      document.getElementById('content').innerHTML = `<div class="card">${html}</div>`;
+      content.innerHTML = `<div class="card">${html}</div>`;
     } catch (error) {
-      showToast(error.message, 'error');
+      showErrorPage(error.message || '加载医生列表失败', function() { PatientPages.renderDoctors(); });
     }
   },
 
@@ -107,9 +116,19 @@ const PatientPages = {
     const deptId = getParam('deptId');
     this.currentDoctorId = doctorId;
     this.currentDeptId = deptId;
+    const content = document.getElementById('content');
 
     const today = new Date();
     const dateInput = getParam('date') || formatDate(today);
+
+    content.innerHTML = `
+      <div style="margin-bottom: 20px;">
+        <a href="javascript:void(0)" onclick="navigate('doctors', { deptId: '${deptId || ''}' })" style="color: #1890ff; text-decoration: none;">
+          ← 返回医生列表
+        </a>
+      </div>
+      <div class="card">${showLoadingSkeleton(6)}</div>
+    `;
 
     try {
       const [doctorRes, schedulesRes] = await Promise.all([
@@ -118,8 +137,8 @@ const PatientPages = {
       ]);
 
       const doctor = doctorRes || {};
-      const schedules = schedulesRes || [];
-      const doctorName = doctor.realName || doctor.name || '未知';
+      const schedules = safeArray(schedulesRes);
+      const doctorName = safeValue(doctor, 'realName') || safeValue(doctor, 'name') || '未知';
 
       const dates = [];
       for (let i = 0; i < 7; i++) {
@@ -147,23 +166,23 @@ const PatientPages = {
 
       let schedulesHtml = '';
       if (!schedules || schedules.length === 0) {
-        schedulesHtml = `<div class="empty"><div class="icon">📅</div><p>当日暂无可用号源</p></div>`;
+        schedulesHtml = showEmptyPage('📅', '当日暂无可用号源');
       } else {
-        (schedules || []).forEach(schedule => {
+        schedules.forEach(schedule => {
           const inventory = schedule.slotInventory || {};
-          const remaining = inventory.availableSlots || 0;
+          const remaining = safeValue(inventory, 'availableSlots', 0);
           const canBook = remaining > 0 && !schedule.isCancelled;
 
           schedulesHtml += `
             <div class="schedule-item">
               <div>
-                <div class="time-slot">${getTimeSlotText(schedule.timeSlot)}</div>
+                <div class="time-slot">${getTimeSlotText(safeValue(schedule, 'timeSlot', ''))}</div>
                 <div class="slots-info">剩余 ${remaining} 个号源</div>
               </div>
-              <div class="fee">¥${schedule.fee}</div>
+              <div class="fee">¥${safeValue(schedule, 'fee', 0)}</div>
               <button class="btn btn-primary" 
                       ${canBook ? '' : 'disabled'}
-                      onclick="PatientPages.showConfirm('${schedule.id}')">
+                      onclick="PatientPages.showConfirm('${safeValue(schedule, 'id', '')}')">
                 ${canBook ? '立即预约' : '已约满'}
               </button>
             </div>
@@ -171,14 +190,14 @@ const PatientPages = {
         });
       }
 
-      document.getElementById('content').innerHTML = `
+      content.innerHTML = `
         <div style="margin-bottom: 20px;">
-          <a href="javascript:void(0)" onclick="navigate('doctors', { deptId: '${deptId}' })" style="color: #1890ff; text-decoration: none;">
+          <a href="javascript:void(0)" onclick="navigate('doctors', { deptId: '${deptId || ''}' })" style="color: #1890ff; text-decoration: none;">
             ← 返回医生列表
           </a>
         </div>
         <div class="card">
-          <h2>${escapeHtml(doctorName)} - ${escapeHtml(doctor.title || '')}</h2>
+          <h2>${escapeHtml(doctorName)} - ${escapeHtml(safeValue(doctor, 'title', ''))}</h2>
           <div style="display: flex; gap: 8px; margin-bottom: 20px; padding: 8px; background: #fafafa; border-radius: 8px;">
             ${dateTabs}
           </div>
@@ -187,7 +206,7 @@ const PatientPages = {
         </div>
       `;
     } catch (error) {
-      showToast(error.message, 'error');
+      showErrorPage(error.message || '加载号源失败', function() { PatientPages.renderSchedules(); });
     }
   },
 
@@ -197,13 +216,23 @@ const PatientPages = {
 
   async showConfirm(scheduleId) {
     this.currentScheduleId = scheduleId;
+    const content = document.getElementById('content');
+
+    content.innerHTML = `
+      <div style="margin-bottom: 20px;">
+        <a href="javascript:void(0)" onclick="navigate('schedules', { doctorId: '${this.currentDoctorId || ''}', deptId: '${this.currentDeptId || ''}' })" style="color: #1890ff; text-decoration: none;">
+          ← 返回号源列表
+        </a>
+      </div>
+      <div class="card">${showLoadingSkeleton(6)}</div>
+    `;
 
     try {
       const res = await API.get(`/api/schedules/${scheduleId}`);
       const schedule = res || {};
-      const deptName = (schedule.department && schedule.department.name) || '';
+      const deptName = safeValue(schedule, 'department.name', '');
       const doctorInfo = schedule.doctor || {};
-      const doctorName = doctorInfo.realName || doctorInfo.name || '';
+      const doctorName = safeValue(doctorInfo, 'realName') || safeValue(doctorInfo, 'name') || '';
 
       const html = `
         <h2 style="margin-bottom: 20px;">预约确认</h2>
@@ -213,19 +242,19 @@ const PatientPages = {
         </div>
         <div class="detail-row">
           <div class="label">医生</div>
-          <div class="value">${escapeHtml(doctorName)} - ${escapeHtml(doctorInfo.title || '')}</div>
+          <div class="value">${escapeHtml(doctorName)} - ${escapeHtml(safeValue(doctorInfo, 'title', ''))}</div>
         </div>
         <div class="detail-row">
           <div class="label">日期</div>
-          <div class="value">${formatDate(schedule.date)}</div>
+          <div class="value">${formatDate(safeValue(schedule, 'date', ''))}</div>
         </div>
         <div class="detail-row">
           <div class="label">时段</div>
-          <div class="value">${getTimeSlotText(schedule.timeSlot)}</div>
+          <div class="value">${getTimeSlotText(safeValue(schedule, 'timeSlot', ''))}</div>
         </div>
         <div class="detail-row">
           <div class="label">挂号费</div>
-          <div class="value" style="color: #ff4d4f; font-weight: 600;">¥${schedule.fee}</div>
+          <div class="value" style="color: #ff4d4f; font-weight: 600;">¥${safeValue(schedule, 'fee', 0)}</div>
         </div>
 
         <h3 style="margin: 24px 0 16px;">实名信息</h3>
@@ -243,14 +272,14 @@ const PatientPages = {
         </div>
 
         <div style="margin-top: 24px; display: flex; gap: 12px;">
-          <button class="btn btn-default" onclick="navigate('schedules', { doctorId: '${schedule.doctorId || doctorId}', deptId: '${schedule.departmentId || deptId}' })">取消</button>
+          <button class="btn btn-default" onclick="navigate('schedules', { doctorId: '${safeValue(schedule, 'doctorId', this.currentDoctorId || '')}', deptId: '${safeValue(schedule, 'departmentId', this.currentDeptId || '')}' })">取消</button>
           <button class="btn btn-primary" onclick="PatientPages.confirmBooking()">确认预约</button>
         </div>
       `;
 
-      document.getElementById('content').innerHTML = `<div class="card">${html}</div>`;
+      content.innerHTML = `<div class="card">${html}</div>`;
     } catch (error) {
-      showToast(error.message, 'error');
+      showErrorPage(error.message || '加载预约信息失败', function() { PatientPages.showConfirm(scheduleId); });
     }
   },
 
@@ -301,9 +330,15 @@ const PatientPages = {
   },
 
   async renderAppointments() {
+    const content = document.getElementById('content');
+    content.innerHTML = `
+      <h2 style="margin-bottom: 20px;">我的预约</h2>
+      <div class="card">${showLoadingSkeleton(5)}</div>
+    `;
+
     try {
       const res = await API.get('/api/appointments/my');
-      const appointments = res || [];
+      const appointments = safeArray(res);
 
       let html = `<h2 style="margin-bottom: 20px;">我的预约</h2>`;
 
@@ -324,12 +359,12 @@ const PatientPages = {
           </thead>
           <tbody>`;
 
-        (appointments || []).forEach(apt => {
+        appointments.forEach(apt => {
           const schedule = apt.schedule || {};
-          const deptName = (apt.department && apt.department.name) || (schedule.department && schedule.department.name) || '';
-          const doctorName = (schedule.doctor && (schedule.doctor.realName || schedule.doctor.name)) || '';
-          const aptDate = apt.date || schedule.date;
-          const aptTimeSlot = apt.timeSlot || schedule.timeSlot;
+          const deptName = safeValue(apt, 'department.name') || safeValue(schedule, 'department.name') || '';
+          const doctorName = safeValue(schedule, 'doctor.realName') || safeValue(schedule, 'doctor.name') || '';
+          const aptDate = safeValue(apt, 'date') || safeValue(schedule, 'date', '');
+          const aptTimeSlot = safeValue(apt, 'timeSlot') || safeValue(schedule, 'timeSlot', '');
 
           html += `
             <tr>
@@ -337,14 +372,14 @@ const PatientPages = {
               <td>${escapeHtml(doctorName)}</td>
               <td>${formatDate(aptDate)}</td>
               <td>${getTimeSlotText(aptTimeSlot)}</td>
-              <td>¥${apt.fee}</td>
-              <td><span class="status-tag ${getStatusClass(apt.status)}">${getStatusText(apt.status)}</span></td>
+              <td>¥${safeValue(apt, 'fee', 0)}</td>
+              <td><span class="status-tag ${getStatusClass(safeValue(apt, 'status', ''))}">${getStatusText(safeValue(apt, 'status', ''))}</span></td>
               <td>
-                <button class="btn btn-default btn-sm" onclick="navigate('appointmentDetail', { id: '${apt.id}' })">详情</button>
-                ${(apt.status === 'PENDING_PAYMENT' || apt.status === 'PENDING_VISIT') ?
-                  `<button class="btn btn-danger btn-sm" style="margin-left: 8px;" onclick="PatientPages.cancelAppointment('${apt.id}')">取消</button>` : ''}
-                ${apt.status === 'PENDING_PAYMENT' ?
-                  `<button class="btn btn-success btn-sm" style="margin-left: 8px;" onclick="PatientPages.payAppointment('${apt.id}')">支付</button>` : ''}
+                <button class="btn btn-default btn-sm" onclick="navigate('appointmentDetail', { id: '${safeValue(apt, 'id', '')}' })">详情</button>
+                ${(safeValue(apt, 'status', '') === 'PENDING_PAYMENT' || safeValue(apt, 'status', '') === 'PENDING_VISIT') ?
+                  `<button class="btn btn-danger btn-sm" style="margin-left: 8px;" onclick="PatientPages.cancelAppointment('${safeValue(apt, 'id', '')}')">取消</button>` : ''}
+                ${safeValue(apt, 'status', '') === 'PENDING_PAYMENT' ?
+                  `<button class="btn btn-success btn-sm" style="margin-left: 8px;" onclick="PatientPages.payAppointment('${safeValue(apt, 'id', '')}')">支付</button>` : ''}
               </td>
             </tr>
           `;
@@ -353,35 +388,46 @@ const PatientPages = {
         html += '</tbody></table>';
       }
 
-      document.getElementById('content').innerHTML = `<div class="card">${html}</div>`;
+      content.innerHTML = `<div class="card">${html}</div>`;
     } catch (error) {
-      showToast(error.message, 'error');
+      showErrorPage(error.message || '加载预约记录失败', function() { PatientPages.renderAppointments(); });
     }
   },
 
   async renderAppointmentDetail() {
     const id = getParam('id');
+    const content = document.getElementById('content');
+
+    content.innerHTML = `
+      <div style="margin-bottom: 20px;">
+        <a href="javascript:void(0)" onclick="navigate('appointments')" style="color: #1890ff; text-decoration: none;">
+          ← 返回我的预约
+        </a>
+      </div>
+      <div class="card">${showLoadingSkeleton(10)}</div>
+    `;
 
     try {
       const res = await API.get(`/api/appointments/${id}`);
       const apt = res || {};
       const schedule = apt.schedule || {};
-      const deptName = (apt.department && apt.department.name) || (schedule.department && schedule.department.name) || '';
-      const doctorInfo = (schedule.doctor || {});
-      const doctorName = doctorInfo.realName || doctorInfo.name || '';
-      const aptDate = apt.date || schedule.date;
-      const aptTimeSlot = apt.timeSlot || schedule.timeSlot;
+      const deptName = safeValue(apt, 'department.name') || safeValue(schedule, 'department.name') || '';
+      const doctorInfo = schedule.doctor || {};
+      const doctorName = safeValue(doctorInfo, 'realName') || safeValue(doctorInfo, 'name') || '';
+      const aptDate = safeValue(apt, 'date') || safeValue(schedule, 'date', '');
+      const aptTimeSlot = safeValue(apt, 'timeSlot') || safeValue(schedule, 'timeSlot', '');
+      const aptStatus = safeValue(apt, 'status', '');
 
       let actionsHtml = '';
-      if (apt.status === 'PENDING_PAYMENT') {
+      if (aptStatus === 'PENDING_PAYMENT') {
         actionsHtml = `
-          <button class="btn btn-success" onclick="PatientPages.payAppointment('${apt.id}')">立即支付</button>
-          <button class="btn btn-danger" style="margin-left: 12px;" onclick="PatientPages.cancelAppointment('${apt.id}')">取消预约</button>
+          <button class="btn btn-success" onclick="PatientPages.payAppointment('${safeValue(apt, 'id', '')}')">立即支付</button>
+          <button class="btn btn-danger" style="margin-left: 12px;" onclick="PatientPages.cancelAppointment('${safeValue(apt, 'id', '')}')">取消预约</button>
         `;
-      } else if (apt.status === 'PENDING_VISIT') {
+      } else if (aptStatus === 'PENDING_VISIT') {
         actionsHtml = `
-          <button class="btn btn-primary" onclick="PatientPages.checkIn('${apt.id}')">签到</button>
-          <button class="btn btn-danger" style="margin-left: 12px;" onclick="PatientPages.cancelAppointment('${apt.id}')">取消预约</button>
+          <button class="btn btn-primary" onclick="PatientPages.checkIn('${safeValue(apt, 'id', '')}')">签到</button>
+          <button class="btn btn-danger" style="margin-left: 12px;" onclick="PatientPages.cancelAppointment('${safeValue(apt, 'id', '')}')">取消预约</button>
         `;
       }
 
@@ -394,11 +440,11 @@ const PatientPages = {
         <h2 style="margin-bottom: 20px;">预约详情</h2>
         <div class="detail-row">
           <div class="label">预约单号</div>
-          <div class="value">${apt.id || '-'}</div>
+          <div class="value">${safeValue(apt, 'id', '-')}</div>
         </div>
         <div class="detail-row">
           <div class="label">状态</div>
-          <div class="value"><span class="status-tag ${getStatusClass(apt.status)}">${getStatusText(apt.status)}</span></div>
+          <div class="value"><span class="status-tag ${getStatusClass(aptStatus)}">${getStatusText(aptStatus)}</span></div>
         </div>
         <div class="detail-row">
           <div class="label">科室</div>
@@ -406,7 +452,7 @@ const PatientPages = {
         </div>
         <div class="detail-row">
           <div class="label">医生</div>
-          <div class="value">${escapeHtml(doctorName)} - ${escapeHtml(doctorInfo.title || '')}</div>
+          <div class="value">${escapeHtml(doctorName)} - ${escapeHtml(safeValue(doctorInfo, 'title', ''))}</div>
         </div>
         <div class="detail-row">
           <div class="label">就诊日期</div>
@@ -418,32 +464,32 @@ const PatientPages = {
         </div>
         <div class="detail-row">
           <div class="label">挂号费用</div>
-          <div class="value">¥${apt.fee}</div>
+          <div class="value">¥${safeValue(apt, 'fee', 0)}</div>
         </div>
         <div class="detail-row">
           <div class="label">患者姓名</div>
-          <div class="value">${escapeHtml(apt.patientName || '')}</div>
+          <div class="value">${escapeHtml(safeValue(apt, 'patientName', ''))}</div>
         </div>
         <div class="detail-row">
           <div class="label">排号</div>
-          <div class="value">${apt.queueNumber || '-'}</div>
+          <div class="value">${safeValue(apt, 'queueNumber', '-')}</div>
         </div>
         <div class="detail-row">
           <div class="label">创建时间</div>
-          <div class="value">${formatDateTime(apt.createdAt)}</div>
+          <div class="value">${formatDateTime(safeValue(apt, 'createdAt', ''))}</div>
         </div>
         ${apt.paidAt ? `
         <div class="detail-row">
           <div class="label">支付时间</div>
-          <div class="value">${formatDateTime(apt.paidAt)}</div>
+          <div class="value">${formatDateTime(safeValue(apt, 'paidAt', ''))}</div>
         </div>` : ''}
 
         <div style="margin-top: 24px;">${actionsHtml}</div>
       `;
 
-      document.getElementById('content').innerHTML = `<div class="card">${html}</div>`;
+      content.innerHTML = `<div class="card">${html}</div>`;
     } catch (error) {
-      showToast(error.message, 'error');
+      showErrorPage(error.message || '加载预约详情失败', function() { PatientPages.renderAppointmentDetail(); });
     }
   },
 

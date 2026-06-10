@@ -40,25 +40,49 @@ const API = {
       'Content-Type': 'application/json',
       ...(options.headers || {}),
     };
-    
+
     if (AppState.token) {
       headers['Authorization'] = `Bearer ${AppState.token}`;
     }
-    
+
     try {
       const response = await fetch(url, {
         ...options,
         headers,
       });
-      
-      const data = await response.json();
-      
+
       if (!response.ok) {
-        throw new Error(data.message || '请求失败');
+        let errorMessage = `请求失败 (${response.status})`;
+        try {
+          const contentType = response.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorData.error || errorMessage;
+          } else {
+            const text = await response.text();
+            if (text && text.length < 200) {
+              errorMessage = text;
+            }
+          }
+        } catch (e) {
+          // ignore parse errors
+        }
+        throw new Error(errorMessage);
       }
-      
+
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('服务器返回格式错误，请检查接口地址');
+      }
+
+      const data = await response.json();
       return data;
     } catch (error) {
+      if (error.message && error.message.includes('token')) {
+        AppState.clearAuth();
+        showToast('登录已过期，请重新登录', 'error');
+        setTimeout(() => renderPage(), 1000);
+      }
       throw error;
     }
   },
@@ -90,8 +114,61 @@ const API = {
   
   delete(url) {
     return this.request(url, { method: 'DELETE' });
-  }
+  },
 };
+
+function safeArray(data) {
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.list)) return data.list;
+  if (data && Array.isArray(data.data)) return data.data;
+  if (data && Array.isArray(data.rows)) return data.rows;
+  if (data && Array.isArray(data.items)) return data.items;
+  if (data && Array.isArray(data.records)) return data.records;
+  return [];
+}
+
+function safeValue(obj, path, defaultValue = '') {
+  if (!obj || typeof obj !== 'object') return defaultValue;
+  const keys = path.split('.');
+  let result = obj;
+  for (const key of keys) {
+    if (result === null || result === undefined) return defaultValue;
+    result = result[key];
+  }
+  return result === null || result === undefined ? defaultValue : result;
+}
+
+function showErrorPage(message, retryCallback) {
+  const content = document.getElementById('content');
+  if (!content) return;
+  content.innerHTML = `
+    <div class="card" style="text-align: center; padding: 48px 24px;">
+      <div style="font-size: 48px; margin-bottom: 16px;">❌</div>
+      <h3 style="margin-bottom: 8px; color: #ff4d4f;">加载失败</h3>
+      <p style="color: #666; margin-bottom: 24px;">${escapeHtml(message)}</p>
+      ${retryCallback ? `<button class="btn btn-primary" onclick="(${retryCallback.toString()})()">重新加载</button>` : ''}
+    </div>
+  `;
+}
+
+function showEmptyPage(icon, message, actionHtml = '') {
+  return `
+    <div class="empty">
+      <div class="icon">${icon}</div>
+      <p>${escapeHtml(message)}</p>
+      ${actionHtml}
+    </div>
+  `;
+}
+
+function showLoadingSkeleton(lineCount = 5) {
+  let html = '<div class="loading-skeleton">';
+  for (let i = 0; i < lineCount; i++) {
+    html += '<div class="skeleton-line" style="height: 20px; margin-bottom: 12px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: skeletonShimmer 1.5s infinite; border-radius: 4px;"></div>';
+  }
+  html += '</div>';
+  return html;
+}
 
 function showToast(message, type = 'info') {
   const toast = document.createElement('div');

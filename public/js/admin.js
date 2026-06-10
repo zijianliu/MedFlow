@@ -1019,18 +1019,22 @@ const AdminPages = {
   },
 
   async renderLogs() {
+    const content = document.getElementById('content');
+
+    content.innerHTML = `
+      <div style="margin-bottom: 20px;">
+        <h2 style="margin: 0;">操作日志</h2>
+      </div>
+      <div class="card">${showLoadingSkeleton(8)}</div>
+    `;
+
     try {
-      const logs = await API.get('/api/logs') || [];
-      const logList = Array.isArray(logs) ? logs : (logs.list || []);
+      const logs = await API.get('/api/logs');
+      const logList = safeArray(logs);
 
       let tableHtml = '';
       if (!logList || logList.length === 0) {
-        tableHtml = `
-          <div class="empty">
-            <div class="icon">📋</div>
-            <p>暂无操作日志</p>
-          </div>
-        `;
+        tableHtml = showEmptyPage('📋', '暂无操作日志');
       } else {
         tableHtml = `<table class="table">
           <thead>
@@ -1043,20 +1047,20 @@ const AdminPages = {
           </thead>
           <tbody>`;
 
-        (logList || []).forEach(l => {
+        logList.forEach(l => {
           tableHtml += `
             <tr>
-              <td><span class="status-tag status-info">${escapeHtml(l.type || '-')}</span></td>
-              <td>${escapeHtml((l.operator && l.operator.realName) || '-')}</td>
-              <td>${escapeHtml(l.content || '-')}</td>
-              <td>${formatDateTime(l.createdAt)}</td>
+              <td><span class="status-tag status-info">${escapeHtml(safeValue(l, 'type', '-'))}</span></td>
+              <td>${escapeHtml(safeValue(l, 'operator.realName') || '-')}</td>
+              <td>${escapeHtml(safeValue(l, 'content', '-'))}</td>
+              <td>${formatDateTime(safeValue(l, 'createdAt', ''))}</td>
             </tr>
           `;
         });
         tableHtml += '</tbody></table>';
       }
 
-      document.getElementById('content').innerHTML = `
+      content.innerHTML = `
         <div style="margin-bottom: 20px;">
           <h2 style="margin: 0;">操作日志</h2>
         </div>
@@ -1065,47 +1069,51 @@ const AdminPages = {
         </div>
       `;
     } catch (error) {
-      showToast(error.message || '加载失败', 'error');
+      showErrorPage(error.message || '加载操作日志失败', function() { AdminPages.renderLogs(); });
     }
   },
 
   async renderNotifications() {
+    const content = document.getElementById('content');
+
+    content.innerHTML = `
+      <div style="margin-bottom: 20px;">
+        <h2 style="margin: 0;">通知中心</h2>
+      </div>
+      ${showLoadingSkeleton(5)}
+    `;
+
     try {
-      const notifications = await API.get('/api/notifications') || [];
-      const notifList = Array.isArray(notifications) ? notifications : (notifications.list || []);
+      const notifications = await API.get('/api/notifications');
+      const notifList = safeArray(notifications);
 
       let html = '';
       if (!notifList || notifList.length === 0) {
-        html = `
-          <div class="empty">
-            <div class="icon">🔔</div>
-            <p>暂无通知</p>
-          </div>
-        `;
+        html = showEmptyPage('🔔', '暂无通知');
       } else {
         html = `<div class="notification-list">`;
-        (notifList || []).forEach(n => {
+        notifList.forEach(n => {
           html += `
             <div class="card notification-item" style="margin-bottom: 12px; padding: 16px;">
               <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <strong>${escapeHtml(n.title || '')}</strong>
-                <span style="color: #999; font-size: 12px;">${formatDateTime(n.createdAt)}</span>
+                <strong>${escapeHtml(safeValue(n, 'title', ''))}</strong>
+                <span style="color: #999; font-size: 12px;">${formatDateTime(safeValue(n, 'createdAt', ''))}</span>
               </div>
-              <div style="color: #666; font-size: 14px;">${escapeHtml(n.content || '')}</div>
+              <div style="color: #666; font-size: 14px;">${escapeHtml(safeValue(n, 'content', ''))}</div>
             </div>
           `;
         });
         html += '</div>';
       }
 
-      document.getElementById('content').innerHTML = `
+      content.innerHTML = `
         <div style="margin-bottom: 20px;">
           <h2 style="margin: 0;">通知中心</h2>
         </div>
         ${html}
       `;
     } catch (error) {
-      showToast(error.message || '加载失败', 'error');
+      showErrorPage(error.message || '加载通知失败', function() { AdminPages.renderNotifications(); });
     }
   },
 };

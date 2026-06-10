@@ -36,7 +36,7 @@ router.post(
 );
 
 router.get(
-  '/doctors/:doctorId/queue',
+  '/queue/:doctorId',
   authMiddleware,
   visitController.getDoctorQueue,
 );

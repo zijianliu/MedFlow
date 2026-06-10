@@ -38,6 +38,7 @@ const logController = __importStar(require("../controllers/log.controller"));
 const auth_1 = require("../middleware/auth");
 const enums_1 = require("../types/enums");
 const router = (0, express_1.Router)();
+router.get('/', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.UserRole.ADMIN, enums_1.UserRole.DEPT_ADMIN), logController.listOperationLogs);
 router.get('/operation', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.UserRole.ADMIN, enums_1.UserRole.DEPT_ADMIN), logController.listOperationLogs);
 router.get('/status/:appointmentId', auth_1.authMiddleware, logController.listStatusLogs);
 exports.default = router;

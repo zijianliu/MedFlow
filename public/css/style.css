@@ -559,6 +559,25 @@ body {
 .stat-card.warning .value { color: #faad14; }
 .stat-card.danger .value { color: #ff4d4f; }
 
+/* 骨架屏动画 */
+@keyframes skeletonShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-line {
+  height: 20px;
+  margin-bottom: 12px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+.loading-skeleton {
+  padding: 16px 0;
+}
+
 /* 响应式 */
 @media (max-width: 768px) {
   .grid-2, .grid-3, .grid-4 {
