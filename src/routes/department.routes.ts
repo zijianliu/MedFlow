@@ -8,6 +8,8 @@ const router = Router();
 router.get('/', departmentController.listDepartments);
 router.get('/doctors/list', departmentController.listDoctors);
 router.get('/doctors/:id', departmentController.getDoctor);
+router.get('/doctors/list', departmentController.listDoctors);
+router.get('/doctors/:id', departmentController.getDoctor);
 router.get('/:id', departmentController.getDepartment);
 
 router.post('/', authMiddleware, requireRoles(UserRole.ADMIN, UserRole.DEPT_ADMIN), departmentController.createDepartment);

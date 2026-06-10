@@ -34,12 +34,18 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const departmentController = __importStar(require("../controllers/department.controller"));
+const doctorController = __importStar(require("../controllers/doctor.controller"));
 const visitController = __importStar(require("../controllers/visit.controller"));
 const auth_1 = require("../middleware/auth");
+const enums_1 = require("../types/enums");
 const router = (0, express_1.Router)();
-router.get('/', departmentController.listDoctors);
-router.get('/:id', departmentController.getDoctor);
-router.get('/:id/queue', auth_1.authMiddleware, visitController.getDoctorQueue);
+router.get('/', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.UserRole.ADMIN, enums_1.UserRole.DEPT_ADMIN, enums_1.UserRole.DOCTOR, enums_1.UserRole.PATIENT), doctorController.listDoctors);
+router.get('/:id', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.UserRole.ADMIN, enums_1.UserRole.DEPT_ADMIN, enums_1.UserRole.DOCTOR, enums_1.UserRole.PATIENT), doctorController.getDoctor);
+router.get('/:id/queue', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.UserRole.DOCTOR, enums_1.UserRole.ADMIN, enums_1.UserRole.DEPT_ADMIN), visitController.getDoctorQueue);
+router.post('/', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.UserRole.ADMIN, enums_1.UserRole.DEPT_ADMIN), doctorController.createDoctor);
+router.put('/:id', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.UserRole.ADMIN, enums_1.UserRole.DEPT_ADMIN), doctorController.updateDoctor);
+router.patch('/:id/toggle-status', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.UserRole.ADMIN, enums_1.UserRole.DEPT_ADMIN), doctorController.toggleDoctorStatus);
+router.patch('/:id/reset-password', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.UserRole.ADMIN), doctorController.resetDoctorPassword);
+router.delete('/:id', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.UserRole.ADMIN), doctorController.deleteDoctor);
 exports.default = router;
 //# sourceMappingURL=doctor.routes.js.map

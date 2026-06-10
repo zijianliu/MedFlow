@@ -266,10 +266,25 @@ async function cancelAppointment(appointmentId, userId, userRole) {
     }
     if (appointment.status === enums_1.AppointmentStatus.PENDING_VISIT) {
         const scheduleDate = new Date(appointment.schedule.date);
-        const now = new Date();
-        const hoursBefore = (scheduleDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-        if (hoursBefore < 2) {
-            throw new errors_1.BadRequestError('就诊前2小时内不能取消预约');
+        scheduleDate.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (scheduleDate.getTime() > today.getTime()) {
+            // 明天及以后的排班，距离就诊时间足够远，可以取消
+        }
+        else {
+            const now = new Date();
+            let startHour = 8;
+            if (appointment.schedule.timeSlot === enums_1.TimeSlot.AFTERNOON)
+                startHour = 14;
+            if (appointment.schedule.timeSlot === enums_1.TimeSlot.EVENING)
+                startHour = 18;
+            const startTime = new Date(scheduleDate);
+            startTime.setHours(startHour, 0, 0, 0);
+            const hoursBefore = (startTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+            if (hoursBefore < 2) {
+                throw new errors_1.BadRequestError('就诊前2小时内不能取消预约');
+            }
         }
     }
     (0, stateMachine_1.validateTransition)(appointment.status, enums_1.AppointmentStatus.CANCELLED);

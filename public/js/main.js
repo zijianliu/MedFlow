@@ -95,12 +95,12 @@ async function quickLogin(type) {
 async function handleLogin() {
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value.trim();
-  
+
   if (!username || !password) {
     showToast('请输入用户名和密码', 'warn');
     return;
   }
-  
+
   try {
     const res = await API.post('/api/auth/login', { username, password });
     if (!res || !res.token) {
@@ -109,9 +109,86 @@ async function handleLogin() {
     }
     AppState.setAuth(res.token, res.user);
     showToast('登录成功', 'success');
-    renderPage();
+
+    if (res.user && res.user.mustChangePassword) {
+      showForceChangePasswordModal();
+    } else {
+      renderPage();
+    }
   } catch (error) {
     showToast(error.message || '登录失败，请稍后重试', 'error');
+  }
+}
+
+function showForceChangePasswordModal() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="login-page">
+      <div class="login-box">
+        <h2 style="margin-bottom: 8px;">🔐 首次登录</h2>
+        <p class="subtitle" style="margin-bottom: 24px;">为了账号安全，请修改初始密码</p>
+
+        <div class="form-group">
+          <label>原密码</label>
+          <input type="password" id="forceOldPwd" placeholder="请输入原密码">
+        </div>
+
+        <div class="form-group">
+          <label>新密码</label>
+          <input type="password" id="forceNewPwd" placeholder="至少6位，不能与原密码相同">
+        </div>
+
+        <div class="form-group">
+          <label>确认新密码</label>
+          <input type="password" id="forceConfirmPwd" placeholder="再次输入新密码">
+        </div>
+
+        <button class="btn btn-primary" onclick="handleForceChangePassword()" style="width: 100%;">确认修改</button>
+      </div>
+    </div>
+  `;
+}
+
+async function handleForceChangePassword() {
+  const oldPwd = document.getElementById('forceOldPwd').value.trim();
+  const newPwd = document.getElementById('forceNewPwd').value.trim();
+  const confirmPwd = document.getElementById('forceConfirmPwd').value.trim();
+
+  if (!oldPwd || !newPwd || !confirmPwd) {
+    showToast('请填写所有密码字段', 'warn');
+    return;
+  }
+
+  if (newPwd.length < 6) {
+    showToast('新密码长度至少6位', 'warn');
+    return;
+  }
+
+  if (newPwd !== confirmPwd) {
+    showToast('两次输入的新密码不一致', 'warn');
+    return;
+  }
+
+  if (oldPwd === newPwd) {
+    showToast('新密码不能与原密码相同', 'warn');
+    return;
+  }
+
+  try {
+    await API.patch('/api/auth/change-password', {
+      oldPassword: oldPwd,
+      newPassword: newPwd,
+    });
+
+    if (AppState.user) {
+      AppState.user.mustChangePassword = false;
+      AppState.setAuth(AppState.token, AppState.user);
+    }
+
+    showToast('密码修改成功', 'success');
+    renderPage();
+  } catch (error) {
+    showToast(error.message || '密码修改失败', 'error');
   }
 }
 
@@ -141,6 +218,7 @@ function renderMainLayout() {
   } else if (role === 'DEPT_ADMIN' || role === 'ADMIN') {
     menuItems = [
       { key: 'deptManage', label: '科室管理', icon: '🏥' },
+      { key: 'doctorManage', label: '医生管理', icon: '👨‍⚕️' },
       { key: 'scheduleManage', label: '排班管理', icon: '📅' },
       { key: 'refundManage', label: '退款处理', icon: '💰' },
       { key: 'logs', label: '操作日志', icon: '📋' },
@@ -244,6 +322,9 @@ function renderPage() {
     switch (page) {
       case 'deptManage':
         AdminPages.renderDepartmentManagement();
+        break;
+      case 'doctorManage':
+        AdminPages.renderDoctorManagement();
         break;
       case 'scheduleManage':
         AdminPages.renderScheduleManagement();

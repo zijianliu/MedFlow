@@ -8,6 +8,22 @@ export const UserRole = {
 
 export type UserRole = typeof UserRole[keyof typeof UserRole];
 
+export const UserStatus = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+} as const;
+
+export type UserStatus = typeof UserStatus[keyof typeof UserStatus];
+
+export const DoctorTitle = {
+  INTERN: '住院医师',
+  ATTENDING: '主治医师',
+  ASSOCIATE: '副主任医师',
+  CHIEF: '主任医师',
+} as const;
+
+export type DoctorTitle = typeof DoctorTitle[keyof typeof DoctorTitle];
+
 export const TimeSlot = {
   MORNING: 'MORNING',
   AFTERNOON: 'AFTERNOON',

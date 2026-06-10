@@ -6,13 +6,13 @@ export declare function notifyRefundSuccess(appointmentId: string): Promise<void
 export declare function listUserNotifications(userId: string, page?: number, pageSize?: number): Promise<{
     list: {
         id: string;
+        title: string;
+        status: string;
         createdAt: Date;
         userId: string;
-        status: string;
         appointmentId: string | null;
         type: string;
         content: string;
-        title: string;
         failReason: string | null;
         sentAt: Date | null;
     }[];

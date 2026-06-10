@@ -1,5 +1,6 @@
 import prisma from '../utils/prisma';
 import { NotFoundError, BadRequestError } from '../utils/errors';
+import * as doctorService from './doctor.service';
 
 export async function listDepartments(includeInactive = false) {
   const where: any = {};
@@ -35,54 +36,15 @@ export async function getDepartmentById(id: string) {
 }
 
 export async function listDoctors(departmentId?: string) {
-  const where: any = {};
-
-  if (departmentId) {
-    where.departmentId = departmentId;
-  } else {
-    where.role = 'DOCTOR';
-  }
-
-  if (!where.role) {
-    where.role = 'DOCTOR';
-  }
-
-  return prisma.user.findMany({
-    where,
-    select: {
-      id: true,
-      username: true,
-      realName: true,
-      role: true,
-      departmentId: true,
-      department: {
-        select: { name: true },
-      },
-    },
-    orderBy: { realName: 'asc' },
+  const result = await doctorService.listDoctors({
+    departmentId,
+    includeInactive: true,
   });
+  return result.list;
 }
 
 export async function getDoctorById(id: string) {
-  const doctor = await prisma.user.findFirst({
-    where: { id, role: 'DOCTOR' },
-    select: {
-      id: true,
-      username: true,
-      realName: true,
-      role: true,
-      departmentId: true,
-      department: {
-        select: { name: true },
-      },
-    },
-  });
-
-  if (!doctor) {
-    throw new NotFoundError('医生不存在');
-  }
-
-  return doctor;
+  return doctorService.getDoctorById(id);
 }
 
 export async function createDepartment(name: string, code?: string, description?: string) {

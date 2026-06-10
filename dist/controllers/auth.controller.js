@@ -36,6 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.register = register;
 exports.login = login;
 exports.getCurrentUser = getCurrentUser;
+exports.changePassword = changePassword;
 const authService = __importStar(require("../services/auth.service"));
 async function register(req, res, next) {
     try {
@@ -63,6 +64,18 @@ async function getCurrentUser(req, res, next) {
             return;
         const user = await authService.getCurrentUser(req.user.userId);
         res.json(user);
+    }
+    catch (error) {
+        next(error);
+    }
+}
+async function changePassword(req, res, next) {
+    try {
+        if (!req.user)
+            return;
+        const { oldPassword, newPassword } = req.body;
+        const result = await authService.changePassword(req.user.userId, oldPassword, newPassword);
+        res.json(result);
     }
     catch (error) {
         next(error);

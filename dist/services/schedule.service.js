@@ -22,12 +22,16 @@ async function createSchedule(doctorId, departmentId, date, timeSlot, maxSlots, 
     }
     const doctor = await prisma_1.default.user.findUnique({
         where: { id: doctorId },
-        select: { id: true, role: true, departmentId: true, realName: true },
+        select: { id: true, role: true, departmentId: true, realName: true, status: true },
     });
-    if (!doctor || doctor.role !== 'DOCTOR') {
+    if (!doctor || doctor.role !== enums_1.UserRole.DOCTOR) {
         throw new errors_1.BadRequestError('医生不存在');
     }
+    if (doctor.status !== enums_1.UserStatus.ACTIVE) {
+        throw new errors_1.BadRequestError('该医生已停用，无法创建排班');
+    }
     const scheduleDate = new Date(date);
+    scheduleDate.setHours(0, 0, 0, 0);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (scheduleDate < today) {

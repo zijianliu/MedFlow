@@ -10,12 +10,12 @@ export declare function callNextPatient(scheduleId: string, doctorId: string): P
 } & {
     id: string;
     departmentId: string;
+    status: string;
     createdAt: Date;
     updatedAt: Date;
-    status: string;
+    fee: number;
     patientId: string;
     scheduleId: string;
-    fee: number;
     queueNumber: number | null;
     patientName: string | null;
     patientIdCard: string | null;

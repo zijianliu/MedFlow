@@ -1,6 +1,6 @@
 import prisma from '../utils/prisma';
 import { BadRequestError, NotFoundError, ConflictError } from '../utils/errors';
-import { AppointmentStatus, LogType } from '../types/enums';
+import { AppointmentStatus, LogType, UserStatus, UserRole } from '../types/enums';
 import { logOperation } from './log.service';
 import { notifyClinicCancelled } from './notification.service';
 
@@ -24,17 +24,22 @@ export async function createSchedule(
 
   const doctor = await prisma.user.findUnique({
     where: { id: doctorId },
-    select: { id: true, role: true, departmentId: true, realName: true },
+    select: { id: true, role: true, departmentId: true, realName: true, status: true },
   });
 
-  if (!doctor || doctor.role !== 'DOCTOR') {
+  if (!doctor || doctor.role !== UserRole.DOCTOR) {
     throw new BadRequestError('医生不存在');
   }
 
+  if (doctor.status !== UserStatus.ACTIVE) {
+    throw new BadRequestError('该医生已停用，无法创建排班');
+  }
+
   const scheduleDate = new Date(date);
+  scheduleDate.setHours(0, 0, 0, 0);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   if (scheduleDate < today) {
     throw new BadRequestError('不能创建过去日期的排班');
   }

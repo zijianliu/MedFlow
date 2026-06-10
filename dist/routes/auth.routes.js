@@ -40,5 +40,6 @@ const router = (0, express_1.Router)();
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.get('/me', auth_1.authMiddleware, authController.getCurrentUser);
+router.patch('/change-password', auth_1.authMiddleware, authController.changePassword);
 exports.default = router;
 //# sourceMappingURL=auth.routes.js.map

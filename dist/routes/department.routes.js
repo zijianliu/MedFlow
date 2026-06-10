@@ -41,6 +41,8 @@ const router = (0, express_1.Router)();
 router.get('/', departmentController.listDepartments);
 router.get('/doctors/list', departmentController.listDoctors);
 router.get('/doctors/:id', departmentController.getDoctor);
+router.get('/doctors/list', departmentController.listDoctors);
+router.get('/doctors/:id', departmentController.getDoctor);
 router.get('/:id', departmentController.getDepartment);
 router.post('/', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.UserRole.ADMIN, enums_1.UserRole.DEPT_ADMIN), departmentController.createDepartment);
 router.put('/:id', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.UserRole.ADMIN, enums_1.UserRole.DEPT_ADMIN), departmentController.updateDepartment);

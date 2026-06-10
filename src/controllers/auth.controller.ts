@@ -31,3 +31,14 @@ export async function getCurrentUser(req: AuthRequest, res: Response, next: any)
     next(error);
   }
 }
+
+export async function changePassword(req: AuthRequest, res: Response, next: any) {
+  try {
+    if (!req.user) return;
+    const { oldPassword, newPassword } = req.body;
+    const result = await authService.changePassword(req.user.userId, oldPassword, newPassword);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}

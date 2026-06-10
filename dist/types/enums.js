@@ -1,12 +1,22 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LogType = exports.NotificationStatus = exports.NotificationType = exports.RefundStatus = exports.AppointmentStatus = exports.TimeSlot = exports.UserRole = void 0;
+exports.LogType = exports.NotificationStatus = exports.NotificationType = exports.RefundStatus = exports.AppointmentStatus = exports.TimeSlot = exports.DoctorTitle = exports.UserStatus = exports.UserRole = void 0;
 exports.UserRole = {
     PATIENT: 'PATIENT',
     DOCTOR: 'DOCTOR',
     DEPT_ADMIN: 'DEPT_ADMIN',
     FINANCE: 'FINANCE',
     ADMIN: 'ADMIN',
+};
+exports.UserStatus = {
+    ACTIVE: 'ACTIVE',
+    INACTIVE: 'INACTIVE',
+};
+exports.DoctorTitle = {
+    INTERN: '住院医师',
+    ATTENDING: '主治医师',
+    ASSOCIATE: '副主任医师',
+    CHIEF: '主任医师',
 };
 exports.TimeSlot = {
     MORNING: 'MORNING',

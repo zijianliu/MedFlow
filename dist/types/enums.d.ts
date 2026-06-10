@@ -6,6 +6,18 @@ export declare const UserRole: {
     readonly ADMIN: "ADMIN";
 };
 export type UserRole = typeof UserRole[keyof typeof UserRole];
+export declare const UserStatus: {
+    readonly ACTIVE: "ACTIVE";
+    readonly INACTIVE: "INACTIVE";
+};
+export type UserStatus = typeof UserStatus[keyof typeof UserStatus];
+export declare const DoctorTitle: {
+    readonly INTERN: "住院医师";
+    readonly ATTENDING: "主治医师";
+    readonly ASSOCIATE: "副主任医师";
+    readonly CHIEF: "主任医师";
+};
+export type DoctorTitle = typeof DoctorTitle[keyof typeof DoctorTitle];
 export declare const TimeSlot: {
     readonly MORNING: "MORNING";
     readonly AFTERNOON: "AFTERNOON";

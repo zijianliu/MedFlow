@@ -1,9 +1,4 @@
 export declare function listRefunds(operatorId: string, operatorRole: string, operatorDeptId?: string | null): Promise<({
-    patient: {
-        id: string;
-        realName: string;
-        phone: string | null;
-    };
     appointment: {
         schedule: {
             department: {
@@ -17,23 +12,23 @@ export declare function listRefunds(operatorId: string, operatorRole: string, op
             departmentId: string;
             createdAt: Date;
             updatedAt: Date;
-            fee: number;
             doctorId: string;
             date: Date;
             timeSlot: string;
             maxSlots: number;
+            fee: number;
             isCancelled: boolean;
             cancelReason: string | null;
         };
     } & {
         id: string;
         departmentId: string;
+        status: string;
         createdAt: Date;
         updatedAt: Date;
-        status: string;
+        fee: number;
         patientId: string;
         scheduleId: string;
-        fee: number;
         queueNumber: number | null;
         patientName: string | null;
         patientIdCard: string | null;
@@ -41,15 +36,20 @@ export declare function listRefunds(operatorId: string, operatorRole: string, op
         checkedInAt: Date | null;
         completedAt: Date | null;
     };
+    patient: {
+        id: string;
+        realName: string;
+        phone: string | null;
+    };
     operator: {
         id: string;
         realName: string;
     } | null;
 } & {
     id: string;
+    status: string;
     createdAt: Date;
     updatedAt: Date;
-    status: string;
     patientId: string;
     appointmentId: string;
     operatorId: string | null;
@@ -57,12 +57,6 @@ export declare function listRefunds(operatorId: string, operatorRole: string, op
     amount: number;
 })[]>;
 export declare function getRefundById(id: string, operatorId: string, operatorRole: string): Promise<{
-    patient: {
-        id: string;
-        realName: string;
-        idCard: string | null;
-        phone: string | null;
-    };
     appointment: {
         schedule: {
             department: {
@@ -76,23 +70,23 @@ export declare function getRefundById(id: string, operatorId: string, operatorRo
             departmentId: string;
             createdAt: Date;
             updatedAt: Date;
-            fee: number;
             doctorId: string;
             date: Date;
             timeSlot: string;
             maxSlots: number;
+            fee: number;
             isCancelled: boolean;
             cancelReason: string | null;
         };
     } & {
         id: string;
         departmentId: string;
+        status: string;
         createdAt: Date;
         updatedAt: Date;
-        status: string;
+        fee: number;
         patientId: string;
         scheduleId: string;
-        fee: number;
         queueNumber: number | null;
         patientName: string | null;
         patientIdCard: string | null;
@@ -100,15 +94,21 @@ export declare function getRefundById(id: string, operatorId: string, operatorRo
         checkedInAt: Date | null;
         completedAt: Date | null;
     };
+    patient: {
+        id: string;
+        realName: string;
+        idCard: string | null;
+        phone: string | null;
+    };
     operator: {
         id: string;
         realName: string;
     } | null;
 } & {
     id: string;
+    status: string;
     createdAt: Date;
     updatedAt: Date;
-    status: string;
     patientId: string;
     appointmentId: string;
     operatorId: string | null;
@@ -119,12 +119,12 @@ export declare function processRefund(refundId: string, operatorId: string, oper
     appointment: {
         id: string;
         departmentId: string;
+        status: string;
         createdAt: Date;
         updatedAt: Date;
-        status: string;
+        fee: number;
         patientId: string;
         scheduleId: string;
-        fee: number;
         queueNumber: number | null;
         patientName: string | null;
         patientIdCard: string | null;
@@ -134,9 +134,9 @@ export declare function processRefund(refundId: string, operatorId: string, oper
     };
 } & {
     id: string;
+    status: string;
     createdAt: Date;
     updatedAt: Date;
-    status: string;
     patientId: string;
     appointmentId: string;
     operatorId: string | null;
@@ -147,12 +147,12 @@ export declare function completeRefund(refundId: string, operatorId: string, ope
     appointment: {
         id: string;
         departmentId: string;
+        status: string;
         createdAt: Date;
         updatedAt: Date;
-        status: string;
+        fee: number;
         patientId: string;
         scheduleId: string;
-        fee: number;
         queueNumber: number | null;
         patientName: string | null;
         patientIdCard: string | null;
@@ -162,9 +162,9 @@ export declare function completeRefund(refundId: string, operatorId: string, ope
     };
 } & {
     id: string;
+    status: string;
     createdAt: Date;
     updatedAt: Date;
-    status: string;
     patientId: string;
     appointmentId: string;
     operatorId: string | null;

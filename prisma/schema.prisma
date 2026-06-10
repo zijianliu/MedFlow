@@ -8,17 +8,24 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(uuid())
-  username       String   @unique
-  password       String
-  realName       String
-  role           String
-  idCard         String?
-  phone          String?
-  departmentId   String?
-  department     Department? @relation(fields: [departmentId], references: [id])
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @default(now())
+  id                 String   @id @default(uuid())
+  username           String   @unique
+  password           String
+  realName           String
+  role               String
+  idCard             String?
+  phone              String?
+  email              String?
+  departmentId       String?
+  department         Department? @relation(fields: [departmentId], references: [id])
+  employeeNo         String?  @unique
+  title              String?
+  bio                String?
+  specialties        String?
+  status             String   @default("ACTIVE")
+  mustChangePassword Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now())
 
   doctorSchedules   Schedule[]        @relation("DoctorSchedules")
   patientAppointments Appointment[]   @relation("PatientAppointments")
