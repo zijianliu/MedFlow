@@ -213,6 +213,7 @@ function renderMainLayout() {
   } else if (role === 'DOCTOR') {
     menuItems = [
       { key: 'todaySchedule', label: '今日排班', icon: '📅' },
+      { key: 'mySchedules', label: '我的排班', icon: '📆' },
       { key: 'notifications', label: '通知中心', icon: '🔔' },
     ];
   } else if (role === 'DEPT_ADMIN' || role === 'ADMIN') {
@@ -308,6 +309,9 @@ function renderPage() {
     switch (page) {
       case 'todaySchedule':
         DoctorPages.renderTodaySchedules();
+        break;
+      case 'mySchedules':
+        DoctorPages.renderMySchedules();
         break;
       case 'queue':
         DoctorPages.renderQueue();

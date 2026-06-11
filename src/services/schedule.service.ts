@@ -250,7 +250,9 @@ export async function listSchedules(params: {
   if (params.startDate || params.endDate) {
     where.date = {};
     if (params.startDate) {
-      where.date.gte = new Date(params.startDate);
+      const start = new Date(params.startDate);
+      start.setHours(0, 0, 0, 0);
+      where.date.gte = start;
     }
     if (params.endDate) {
       const end = new Date(params.endDate);

@@ -328,4 +328,133 @@ const DoctorPages = {
       showToast(error.message, 'error');
     }
   },
+
+  async renderMySchedules() {
+    const doctorId = safeValue(AppState, 'user.id', '');
+    const content = document.getElementById('content');
+    const today = formatDate(new Date());
+
+    const weekLater = new Date();
+    weekLater.setDate(weekLater.getDate() + 30);
+    const defaultEndDate = formatDate(weekLater);
+
+    const startDate = getParam('startDate') || today;
+    const endDate = getParam('endDate') || defaultEndDate;
+
+    content.innerHTML = `
+      <h2 style="margin-bottom: 20px;">我的排班</h2>
+      <div class="card">${showLoadingSkeleton(6)}</div>
+    `;
+
+    try {
+      if (!doctorId) {
+        throw new Error('用户信息异常，请重新登录');
+      }
+
+      const res = await API.get(`/api/schedules?doctorId=${doctorId}&startDate=${startDate}&endDate=${endDate}`);
+      const schedules = safeArray(res);
+
+      const stats = {
+        total: schedules.length,
+        future: schedules.filter(s => new Date(s.date) >= new Date(today)).length,
+        totalSlots: schedules.reduce((sum, s) => sum + (safeValue(s, 'slotInventory.totalSlots', 0)), 0),
+        bookedSlots: schedules.reduce((sum, s) => sum + (safeValue(s, 'slotInventory.bookedSlots', 0)), 0),
+      };
+
+      let tableHtml = '';
+      if (!schedules || schedules.length === 0) {
+        tableHtml = showEmptyPage('📅', '暂无排班信息', '<button class="btn btn-primary" style="margin-top: 16px;" onclick="navigate(\'todaySchedule\')">查看今日排班</button>');
+      } else {
+        tableHtml = `<table class="table">
+          <thead>
+            <tr>
+              <th>日期</th>
+              <th>时段</th>
+              <th>科室</th>
+              <th>总号源</th>
+              <th>已预约</th>
+              <th>剩余</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+        schedules.forEach(schedule => {
+          const inventory = schedule.slotInventory || {};
+          const total = safeValue(inventory, 'totalSlots', 0);
+          const booked = safeValue(inventory, 'bookedSlots', 0);
+          const remaining = total - booked;
+          const deptName = safeValue(schedule, 'department.name', '-');
+          const schedDate = new Date(schedule.date);
+          const todayDate = new Date(today);
+          schedDate.setHours(0, 0, 0, 0);
+          todayDate.setHours(0, 0, 0, 0);
+          const isToday = schedDate.getTime() === todayDate.getTime();
+          const isPast = schedDate.getTime() < todayDate.getTime();
+
+          let statusTag = '';
+          if (schedule.isCancelled) {
+            statusTag = '<span class="status-tag status-danger">已停诊</span>';
+          } else if (isPast) {
+            statusTag = '<span class="status-tag status-info">已结束</span>';
+          } else if (isToday) {
+            statusTag = '<span class="status-tag status-success">今日</span>';
+          } else {
+            statusTag = '<span class="status-tag status-info">待接诊</span>';
+          }
+
+          tableHtml += `
+            <tr>
+              <td>${formatDate(schedule.date)}</td>
+              <td>${getTimeSlotText(safeValue(schedule, 'timeSlot', ''))}</td>
+              <td>${escapeHtml(deptName)}</td>
+              <td>${total}</td>
+              <td>${booked}</td>
+              <td>${remaining}</td>
+              <td>${statusTag}</td>
+              <td>
+                ${!schedule.isCancelled && !isPast ? `
+                  <button class="btn btn-primary btn-sm" onclick="navigate('queue', { scheduleId: '${schedule.id}' })">查看队列</button>
+                ` : `
+                  <button class="btn btn-default btn-sm" onclick="navigate('queue', { scheduleId: '${schedule.id}' })">查看详情</button>
+                `}
+              </td>
+            </tr>
+          `;
+        });
+
+        tableHtml += '</tbody></table>';
+      }
+
+      content.innerHTML = `
+        <h2 style="margin-bottom: 20px;">我的排班</h2>
+
+        <div class="grid grid-4" style="margin-bottom: 24px;">
+          <div class="stat-card">
+            <div class="label">排班总数</div>
+            <div class="value">${stats.total}</div>
+          </div>
+          <div class="stat-card success">
+            <div class="label">未来排班</div>
+            <div class="value">${stats.future}</div>
+          </div>
+          <div class="stat-card warning">
+            <div class="label">总号源</div>
+            <div class="value">${stats.totalSlots}</div>
+          </div>
+          <div class="stat-card info">
+            <div class="label">已预约</div>
+            <div class="value">${stats.bookedSlots}</div>
+          </div>
+        </div>
+
+        <div class="card">
+          ${tableHtml}
+        </div>
+      `;
+    } catch (error) {
+      showErrorPage(error.message || '加载排班失败', function() { DoctorPages.renderMySchedules(); });
+    }
+  },
 };
